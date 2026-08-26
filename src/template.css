@@ -1,0 +1,50 @@
+.template { padding: 14px 16px 0; }
+.template small { display: block; margin-bottom: 6px; }
+.template select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 8px; }
+.shark-logo { width: 34px; height: 34px; overflow: visible; }
+.shark-logo path { fill: var(--mauve); stroke: none; }
+.shark-logo path.fin { fill: var(--blue); }
+.shark-logo circle { fill: var(--bg); }
+.pane-header b { display: block; margin-top: 5px; font-size: calc(13px * var(--font-scale)); }
+.pane-content { padding: 16px; }
+.pane-content .template { padding: 12px 0 0; }
+.side-actions { display: grid; gap: 8px; margin: 18px 0; }
+.side-actions button { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; }
+.info-card { display: flex; flex-direction: column; gap: 6px; padding: 14px; margin-top: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.info-card p, .muted-copy { color: var(--muted); font-size: calc(11px * var(--font-scale)); line-height: 1.55; margin: 0; }
+.info-card.accent { flex-direction: row; gap: 10px; border-left: 3px solid var(--mauve); }
+.info-card.accent > svg { flex: 0 0 auto; color: var(--mauve); }
+.prominent { margin: 20px 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+.field-grid label:last-child { grid-column: 1 / -1; }
+.state-list { margin-top: 22px; border-top: 1px solid var(--border); padding-top: 14px; }
+.state-list > div { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: calc(12px * var(--font-scale)); }
+.state-list p { color: var(--muted); font-size: 11px; }
+.settings-group { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 20px; }
+.settings-group > small { display: block; margin-bottom: 14px; }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; padding: 3px; }
+.segmented button { border: 0; background: transparent; color: var(--muted); padding: 7px; }
+.segmented button.active { background: var(--surface); color: var(--text); }
+.learn-pane { padding: 18px; font-size: calc(12px * var(--font-scale)); line-height: 1.6; }
+.learn-pane h4 { margin: 24px 0 8px; font: 600 calc(14px * var(--font-scale)) Georgia, serif; }
+.learn-pane ol { padding-left: 20px; color: var(--muted); }
+.learn-pane li { margin: 7px 0; }
+.learn-pane > p { color: var(--muted); }
+.about-shark { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; }
+.about-shark .shark-logo { width: 48px; height: 48px; }
+.about-shark h3, .about-shark p { margin: 0; }
+.about-shark h3 { font: 600 21px Georgia, serif; }
+.about-shark p { color: var(--muted); font-size: 10px; }
+.learn-equation { margin: 10px 0; padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; text-align: center; color: var(--mauve); font-size: 17px; }
+.learn-equation p { color: var(--muted); text-align: left; font: 11px/1.5 Inter, sans-serif; margin: 9px 0 0; }
+.series-strip { display: flex; align-items: center; gap: 7px; min-height: 28px; margin: 0 22px 2px; color: var(--muted); font-size: 11px; }
+.series-strip > span.blue, .series-strip > span.mauve { width: 18px; border-top: 2px solid var(--blue); }
+.series-strip > span.mauve { border-color: var(--mauve); margin-left: 10px; }
+.export-actions { gap: 5px; }
+.export-actions button { min-width: 54px; justify-content: center; }
+main[data-density="compact"] .field { margin: 6px 0; }
+main[data-density="compact"] .field input, main[data-density="compact"] .field select { padding: 6px 8px; }
+main[data-density="compact"] .layers > button { padding-top: 6px; padding-bottom: 6px; }
+main[data-density="compact"] .report-title { padding-top: 22px; padding-bottom: 20px; }
+.sidebar, .workspace { font-size: calc(14px * var(--font-scale)); }
+.field > span, .toggle, .tabs button, .caption { font-size: calc(11px * var(--font-scale)); }

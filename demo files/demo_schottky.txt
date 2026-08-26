@@ -1,0 +1,2 @@
+# A simple Silicon Schottky diodesurface	schottky=0.7	v1Si	t=2000	Na=1e17substrate ohmic v2fullyionizedv1 0.0v2 -0.0
+#schrodingerstart=1900 #schrodingerstop=2200 temp=300Kdy=5

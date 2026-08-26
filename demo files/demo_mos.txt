@@ -1,0 +1,4 @@
+# This file demonstrates a Silicon MOS structuresurface	schottky=7.5	v1SiO2	t=500	Eg=15	deltaEc=7.5Si	t=5000	Na=1e17substratefullyionizedv1 0#v1 -4.0 4.0 0.25#CV only
+#schrodingerstart=400
+#schrodingerstop=2000
+#find quantized statestemp=300Kdy=1
