@@ -65,7 +65,10 @@ main[data-density="compact"] .report-title { padding-top: 22px; padding-bottom: 
 .graph-controls { display: flex; gap: 12px; color: var(--muted); font-size: 10px; }
 .graph-controls label { display: flex; align-items: center; gap: 4px; }
 .math-display { display: block; overflow-x: auto; overflow-y: hidden; padding: 5px 0; }
-.math-inline .katex { font-size: 1em; }
+.math-display math { display: block; margin: 0 auto; font-size: 1.08em; }
+.math-inline { display: inline-flex; align-items: baseline; vertical-align: baseline; }
+.math-inline math { font-size: 1em; }
+.math-display code, .math-inline code { color: var(--red); font: 11px ui-monospace, monospace; }
 .guide { max-width: 1080px; margin: 24px auto 80px; border: 1px solid var(--border); background: var(--panel); }
 .guide > header { padding: 38px 42px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, color-mix(in srgb,#00a6a6 12%,var(--panel)),var(--panel)); }
 .guide > header h2 { margin: 8px 0; font: 500 31px Georgia, serif; }
@@ -77,7 +80,7 @@ main[data-density="compact"] .report-title { padding-top: 22px; padding-bottom: 
 .guide p { color: var(--muted); line-height: 1.65; font-size: 12px; }
 .theory { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 30px 38px; border-bottom: 1px solid var(--border); }
 .theory > div { min-width: 0; padding: 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
-.theory .katex-display { margin: .8em 0; color: var(--mauve); font-size: .88em; }
+.theory .math-display { margin: .8em 0; color: var(--mauve); font-size: .92em; }
 .reading-guide { padding: 30px 38px; display: grid; grid-template-columns: repeat(2,1fr); gap: 0 30px; }
 .reading-guide > h3 { grid-column: 1 / -1; }
 .reading-guide > div { border-top: 1px solid var(--border); padding: 14px 0; }
