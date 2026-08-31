@@ -100,11 +100,13 @@ npm run tauri dev
 Install the current release from the Requin tap:
 
 ```bash
-brew install --cask --no-quarantine tmah1602/requin/requin
+brew install --cask tmah1602/requin/requin
 ```
 
 Requin currently ships unsigned Apple Silicon and Intel builds. The explicit
-`--no-quarantine` flag is required until release signing and notarization are configured.
+The current binaries are not Apple-notarized. If macOS blocks the first launch,
+open **System Settings → Privacy & Security** and choose **Open Anyway** for
+Requin. This is only needed once.
 
 ### Debian or Ubuntu
 

@@ -44,4 +44,4 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: --bundles dmg
-          releaseAssetNamePattern: Requin_[version]_[arch].[ext]
+          assetNamePattern: Requin_[version]_[arch].[ext]
