@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    name: macOS (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: aarch64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Requin ${{ github.ref_name }}
+          releaseBody: |
+            Requin is a one-dimensional semiconductor electrostatics and quantum-analysis workspace.
+
+            This release adds a homework-ready MKC A1.4 Gauss-law workflow, prescribed volume and sheet charge, analytic verification, and potential/field/charge reporting.
+
+            The macOS builds are currently unsigned. Homebrew users should follow the installation command in the README.
+          releaseDraft: false
+          prerelease: false
+          args: --bundles dmg
+          releaseAssetNamePattern: Requin_[version]_[arch].[ext]

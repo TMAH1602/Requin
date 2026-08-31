@@ -38,12 +38,15 @@ The goal is not to hide the physics. It is to remove the interface friction betw
 - Built-in PN, Schottky, MOS, GaAs/AlGaAs HEMT, quantum-well, and heterojunction templates.
 - Si/Ge/SiGe, oxide, arsenide, phosphide, nitride, and common ternary-alloy material defaults.
 - Donor/acceptor doping, alloy composition, contact, mesh, temperature, quantum-window, and voltage-sweep controls.
+- Prescribed signed volume charge and interface sheet charge for textbook Gauss-law electrostatics.
+- MKC A1.4 and general fixed-charge MOS presets with numerical-versus-analytic verification.
 - Import of the four included legacy 1D Poisson demonstration decks.
 - Versioned, human-readable `.requin.toml` project files.
 
 ### Numerical core
 
 - Interface-aware, finite-volume nonlinear Poisson solver.
+- Fixed-potential and true zero-field boundary conditions with exact dielectric-interface placement.
 - Boltzmann carrier populations and complete-ionization doping model.
 - Ohmic, Schottky, and zero-field boundaries.
 - Position-dependent effective-mass electron Schrödinger eigenstates.
@@ -54,6 +57,7 @@ The goal is not to hide the physics. It is to remove the interface friction betw
 ### Scientific workspace
 
 - Band, carrier-density, electric-field, wavefunction, and I–V/C–V figures.
+- Potential and physical charge-density figures, analytic overlays, voltage-drop cards, and homework-ready reports.
 - Adaptive nm/µm, V/cm/kV/cm/MV/cm, mA/cm², and µF/cm² presentation.
 - Logarithmic carrier plots, hover readouts, grid/point controls, derived extrema, and a numerical data browser.
 - LaTeX-style equations rendered as native MathML.
@@ -90,6 +94,17 @@ Start the development application:
 ```bash
 npm run tauri dev
 ```
+
+### Homebrew on macOS
+
+Install the current release from the Requin tap:
+
+```bash
+brew install --cask --no-quarantine tmah1602/requin/requin
+```
+
+Requin currently ships unsigned Apple Silicon and Intel builds. The explicit
+`--no-quarantine` flag is required until release signing and notarization are configured.
 
 ### Debian or Ubuntu
 
@@ -190,4 +205,3 @@ Contributions are welcome, especially numerical validation cases, material-data 
 ## License
 
 Requin is available under the [MIT License](LICENSE).
-

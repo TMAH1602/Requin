@@ -14,7 +14,16 @@ Supported endpoint conditions are:
 
 - **Ohmic:** potential follows the adjacent layer's approximate neutral Fermi-level relation and applied voltage.
 - **Schottky:** barrier height and applied voltage define the contact potential.
-- **Zero field:** the endpoint copies its adjacent potential as an approximate Neumann boundary.
+- **Zero field:** a Neumann condition sets the outward electric-field flux to zero.
+- **Fixed potential:** an ideal metal or external reference fixes the electrostatic potential directly.
+
+Zero-field endpoints are assembled as Neumann flux conditions. For prescribed-charge layers, the boundary half-cell is integrated explicitly rather than approximated as a second fixed-potential endpoint.
+
+## Prescribed charge and analytic verification
+
+Each layer can use either the self-consistent mobile-carrier model or a signed, prescribed volume charge in C/cm³. Prescribed-charge layers set mobile electron and hole populations to zero for the electrostatic solve. A layer's sheet charge is a signed count of elementary charges per cm² at its surface-facing boundary and produces the corresponding displacement-field jump.
+
+The MKC A1.4 and fixed-charge MOS presets use a fixed-potential metal, SiO₂, charged silicon, and a zero-field semiconductor endpoint. Requin independently integrates the piecewise charge and permittivity profile to provide analytic potential and field curves, voltage differences, total semiconductor charge, balancing metal charge, and numerical error metrics.
 
 The current release treats dopants as fully ionized even though the project schema retains the intended model setting.
 
@@ -39,4 +48,3 @@ PN current is an ideal diffusion estimate derived from equilibrium material and 
 ## Convergence
 
 A result records quality, iteration count, maximum potential update, convergence status, and warnings. A preview can be visually useful, but it is not a substitute for a converged full-quality result. Mesh-refinement and parameter-sensitivity checks remain the user's responsibility.
-

@@ -9,6 +9,8 @@ fn layer(name: &str, material: &str, thickness_nm: f64, nd: f64, na: f64, x: Opt
         acceptors_cm3: na,
         alloy_fraction: x,
         sheet_charge_cm2: 0.0,
+        charge_mode: ChargeMode::MobileCarriers,
+        fixed_charge_c_cm3: 0.0,
         mesh_spacing_nm: None,
     }
 }
@@ -60,6 +62,35 @@ pub fn template(kind: &str) -> Option<DeviceProject> {
                 step_v: 0.25,
             };
             p.mesh_spacing_nm = 2.;
+        }
+        "mkc_a1_4" | "fixed_mos" => {
+            p.name = if kind == "mkc_a1_4" {
+                "MKC A1.4 — MOS Gauss Law".into()
+            } else {
+                "Fixed-charge MOS electrostatics".into()
+            };
+            p.description = "Metal / SiO2 / prescribed-charge silicon electrostatics".into();
+            p.surface = Contact {
+                kind: ContactKind::FixedPotential,
+                barrier_ev: 0.0,
+                voltage_v: 0.0,
+            };
+            p.substrate = Contact {
+                kind: ContactKind::ZeroField,
+                barrier_ev: 0.0,
+                voltage_v: 0.0,
+            };
+            let mut oxide = layer("Oxide", "SiO2", 20., 0., 0., None);
+            oxide.charge_mode = ChargeMode::FixedVolume;
+            let mut silicon = layer("Charged silicon", "Si", 100., 0., 0., None);
+            silicon.charge_mode = ChargeMode::FixedVolume;
+            silicon.fixed_charge_c_cm3 = 1.602_176_634e-4;
+            let mut neutral_silicon = layer("Neutral silicon tail", "Si", 50., 0., 0., None);
+            neutral_silicon.charge_mode = ChargeMode::FixedVolume;
+            p.layers = vec![oxide, silicon, neutral_silicon];
+            p.mesh_spacing_nm = 1.0;
+            p.sweep.enabled = false;
+            p.analytic_verification = true;
         }
         "hemt" => {
             p.name = "GaAs / AlGaAs HEMT".into();

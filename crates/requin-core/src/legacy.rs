@@ -117,6 +117,8 @@ pub fn import_legacy(text: &str, name: &str) -> Result<LegacyImport, String> {
                     sheet_charge_cm2: kv(&tokens[1..], "sheetcharge")
                         .and_then(number)
                         .unwrap_or(0.0),
+                    charge_mode: ChargeMode::MobileCarriers,
+                    fixed_charge_c_cm3: 0.0,
                     mesh_spacing_nm: kv(&tokens[1..], "dy").and_then(number).map(|v| v * 0.1),
                 });
             }

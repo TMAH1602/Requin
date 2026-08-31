@@ -15,6 +15,7 @@ pub struct DeviceProject {
     pub quantum: Option<QuantumRegion>,
     pub sweep: Sweep,
     pub solver: SolverSettings,
+    pub analytic_verification: bool,
 }
 
 impl Default for DeviceProject {
@@ -36,6 +37,7 @@ impl Default for DeviceProject {
             quantum: None,
             sweep: Sweep::default(),
             solver: SolverSettings::default(),
+            analytic_verification: false,
         }
     }
 }
@@ -50,6 +52,8 @@ pub struct Layer {
     pub donors_cm3: f64,
     pub acceptors_cm3: f64,
     pub sheet_charge_cm2: f64,
+    pub charge_mode: ChargeMode,
+    pub fixed_charge_c_cm3: f64,
     pub mesh_spacing_nm: Option<f64>,
 }
 
@@ -63,9 +67,19 @@ impl Default for Layer {
             donors_cm3: 0.0,
             acceptors_cm3: 1e16,
             sheet_charge_cm2: 0.0,
+            charge_mode: ChargeMode::MobileCarriers,
+            fixed_charge_c_cm3: 0.0,
             mesh_spacing_nm: None,
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ChargeMode {
+    #[default]
+    MobileCarriers,
+    FixedVolume,
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -75,6 +89,7 @@ pub enum ContactKind {
     #[default]
     Ohmic,
     ZeroField,
+    FixedPotential,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -184,10 +199,26 @@ pub struct SimulationResult {
     pub electron_cm3: Vec<f64>,
     pub hole_cm3: Vec<f64>,
     pub net_charge_cm3: Vec<f64>,
+    pub charge_density_c_cm3: Vec<f64>,
     pub material: Vec<String>,
     pub eigenstates: Vec<Eigenstate>,
     pub sweep: Vec<SweepPoint>,
     pub convergence: ConvergenceReport,
+    pub analytic: Option<AnalyticVerification>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AnalyticVerification {
+    pub potential_v: Vec<f64>,
+    pub electric_field_v_cm: Vec<f64>,
+    pub max_potential_error_v: f64,
+    pub max_field_error_v_cm: f64,
+    pub oxide_voltage_v: Option<f64>,
+    pub semiconductor_voltage_v: Option<f64>,
+    pub oxide_field_v_cm: Option<f64>,
+    pub peak_semiconductor_field_v_cm: Option<f64>,
+    pub semiconductor_charge_c_cm2: Option<f64>,
+    pub balancing_sheet_charge_c_cm2: f64,
 }
 
 impl DeviceProject {
@@ -217,6 +248,9 @@ impl DeviceProject {
                     errors.push(format!("layer {} alloy fraction must be in [0, 1]", i + 1));
                 }
             }
+            if !layer.fixed_charge_c_cm3.is_finite() || !layer.sheet_charge_cm2.is_finite() {
+                errors.push(format!("layer {} charge values must be finite", i + 1));
+            }
             if crate::materials::material(&layer.material, layer.alloy_fraction, self.temperature_k)
                 .is_none()
             {
@@ -225,6 +259,23 @@ impl DeviceProject {
                     i + 1,
                     layer.material
                 ));
+            }
+        }
+        if self.analytic_verification {
+            if self.surface.kind != ContactKind::FixedPotential {
+                errors.push("analytic verification requires a fixed-potential surface".into());
+            }
+            if self.substrate.kind != ContactKind::ZeroField {
+                errors.push("analytic verification requires a zero-field substrate".into());
+            }
+            if self
+                .layers
+                .iter()
+                .any(|layer| layer.charge_mode != ChargeMode::FixedVolume)
+            {
+                errors.push(
+                    "analytic verification requires fixed-volume charge in every layer".into(),
+                );
             }
         }
         if let Some(q) = &self.quantum {
@@ -245,5 +296,28 @@ impl DeviceProject {
     }
     pub fn from_toml(value: &str) -> Result<Self, toml::de::Error> {
         toml::from_str(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn old_projects_default_to_mobile_charge() {
+        let source = r#"
+schema_version = 1
+name = "Old project"
+
+[[layers]]
+name = "Silicon"
+material = "Si"
+thickness_nm = 100.0
+acceptors_cm3 = 1e16
+"#;
+        let project = DeviceProject::from_toml(source).unwrap();
+        assert_eq!(project.layers[0].charge_mode, ChargeMode::MobileCarriers);
+        assert_eq!(project.layers[0].fixed_charge_c_cm3, 0.0);
+        assert!(!project.analytic_verification);
     }
 }
