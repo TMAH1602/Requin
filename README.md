@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src-tauri/icons/icon.svg" width="112" alt="Requin shark logo">
+  <img src="src-tauri/icons/icon.png" width="112" alt="Requin angular shark logo">
 
 # Requin
 
@@ -103,10 +103,16 @@ Install the current release from the Requin tap:
 brew install --cask tmah1602/requin/requin
 ```
 
-Requin currently ships unsigned Apple Silicon and Intel builds. The explicit
-The current binaries are not Apple-notarized. If macOS blocks the first launch,
+Requin ships unsigned Apple Silicon and Intel builds. If macOS blocks a launch,
 open **System Settings → Privacy & Security** and choose **Open Anyway** for
-Requin. This is only needed once.
+Requin. You may need to approve a new version after upgrading.
+
+To update an existing installation:
+
+```bash
+brew update
+brew upgrade --cask tmah1602/requin/requin
+```
 
 ### Debian or Ubuntu
 

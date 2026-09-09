@@ -1,12 +1,13 @@
 {
   "name": "requin-ui",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite --port 1420",
     "build": "tsc && vite build",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "test:ui": "playwright test"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
@@ -17,13 +18,14 @@
     "recharts": "^3.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tauri-apps/cli": "^2.8.0",
     "@types/katex": "^0.16.7",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.4.0",
+    "prettier": "^3.9.6",
     "typescript": "~5.8.3",
     "vite": "^7.0.0"
   }
 }
-

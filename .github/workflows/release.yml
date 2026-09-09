@@ -1,12 +1,17 @@
-name: Release
+name: Build release installers
 
+# Publishing is explicit: verified installers are uploaded once, then their
+# checksums are pinned in Homebrew. CI never replaces published release assets.
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build (for example v0.1.1)
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   macos:
@@ -22,6 +27,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -29,19 +36,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: npm ci
-      - uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: npm run tauri -- build --bundles dmg
+      - uses: actions/upload-artifact@v4
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: Requin ${{ github.ref_name }}
-          releaseBody: |
-            Requin is a one-dimensional semiconductor electrostatics and quantum-analysis workspace.
-
-            This release adds a homework-ready MKC A1.4 Gauss-law workflow, prescribed volume and sheet charge, analytic verification, and potential/field/charge reporting.
-
-            The macOS builds are currently unsigned. Homebrew users should follow the installation command in the README.
-          releaseDraft: false
-          prerelease: false
-          args: --bundles dmg
-          assetNamePattern: Requin_[version]_[arch].[ext]
+          name: Requin-${{ inputs.tag }}-${{ matrix.arch }}
+          path: target/release/bundle/dmg/*.dmg
+          if-no-files-found: error

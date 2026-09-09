@@ -1,4 +1,5 @@
 export type ContactKind = "schottky" | "ohmic" | "zero_field" | "fixed_potential";
+export type ChartKind = "potential" | "field" | "charge" | "bands" | "carriers" | "wave" | "sweep";
 export type ChargeMode = "mobile_carriers" | "fixed_volume";
 export interface Layer { name:string; material:string; thickness_nm:number; alloy_fraction:number|null; donors_cm3:number; acceptors_cm3:number; sheet_charge_cm2:number; charge_mode:ChargeMode; fixed_charge_c_cm3:number; mesh_spacing_nm:number|null }
 export interface Contact { kind:ContactKind; barrier_ev:number; voltage_v:number }

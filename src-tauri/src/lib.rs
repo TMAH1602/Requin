@@ -60,6 +60,35 @@ async fn run_simulation(
     .map_err(|e| e.to_string())?
 }
 
+#[tauri::command]
+async fn save_export(name: String, content: String) -> Result<Option<String>, String> {
+    let extension = std::path::Path::new(&name)
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("txt");
+    let file = rfd::AsyncFileDialog::new()
+        .set_title("Save Requin export")
+        .set_file_name(&name)
+        .add_filter("Export file", &[extension])
+        .save_file()
+        .await;
+    let Some(file) = file else { return Ok(None) };
+    let path = file.path().to_owned();
+    tauri::async_runtime::spawn_blocking(move || {
+        std::fs::write(&path, content).map_err(|e| format!("Could not save file: {e}"))?;
+        Ok(Some(path.to_string_lossy().into_owned()))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn print_report(window: tauri::WebviewWindow) -> Result<(), String> {
+    window
+        .print()
+        .map_err(|e| format!("Could not open the print dialog: {e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -70,7 +99,9 @@ pub fn run() {
             serialize_project,
             validate_project,
             import_legacy_deck,
-            run_simulation
+            run_simulation,
+            save_export,
+            print_report
         ])
         .run(tauri::generate_context!())
         .expect("failed to run Requin");

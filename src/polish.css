@@ -1,0 +1,554 @@
+/* Shared interaction and layout refinements across all color themes. */
+main {
+  --accent: #62d5ce;
+  --font-scale: 1;
+  grid-template-columns: 68px 316px minmax(0, 1fr);
+}
+main[data-theme="latte"] {
+  --accent: #007c83;
+}
+button,
+summary,
+select,
+input {
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  cursor: pointer;
+  transition:
+    background-color 120ms,
+    border-color 120ms,
+    color 120ms;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+button:focus-visible,
+summary:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.field > div:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.field input {
+  font-variant-numeric: tabular-nums;
+  padding: 10px 11px;
+}
+.field input[aria-invalid="true"] {
+  box-shadow: inset 0 -2px var(--red);
+}
+.field .input-error {
+  color: var(--red);
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.field em {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.field select,
+.template select {
+  cursor: pointer;
+  padding: 10px 11px;
+}
+select option {
+  color: var(--text);
+  background: var(--panel);
+}
+input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.rail {
+  padding: 16px 8px;
+  gap: 12px;
+}
+.rail .brand {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  margin-bottom: 15px;
+  background: transparent;
+}
+.shark-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+.rail button {
+  width: 44px;
+  height: 44px;
+  color: var(--muted);
+  position: relative;
+  border-radius: 12px;
+}
+.rail button:hover,
+.rail button.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg));
+}
+.rail button.active::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  width: 3px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.rail button svg {
+  width: 20px;
+  height: 20px;
+}
+.sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.sidebar > header {
+  height: 96px;
+  padding: 20px;
+}
+.pane-header small {
+  color: var(--accent);
+}
+.pane-header b {
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 550;
+  line-height: 1.5;
+}
+.pane-content,
+.editor {
+  padding: 20px;
+}
+.section-title {
+  padding: 20px 20px 10px;
+}
+.layers {
+  padding: 0 12px;
+}
+.layers > button {
+  border: 1px solid transparent;
+  padding: 11px 10px;
+  margin-bottom: 5px;
+}
+.layers > button:hover {
+  background: var(--surface);
+}
+.layers > button.selected {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+.layers b {
+  font-size: calc(12px * var(--font-scale));
+  font-weight: 550;
+}
+.layers small {
+  line-height: 1.5;
+}
+.editor-head button {
+  padding: 7px;
+}
+.editor-head button:hover:not(:disabled) {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+}
+.side-actions button:hover,
+.sidebar .homework-card button:hover,
+.actions button:hover {
+  border-color: var(--accent);
+}
+.menubar {
+  height: 36px;
+  padding: 0 17px;
+  background: var(--side);
+}
+.menu {
+  position: relative;
+}
+.menu-trigger {
+  padding: 6px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  border-radius: 6px;
+  font-size: 12px;
+}
+.menu-trigger:hover,
+.menu-trigger[aria-expanded="true"] {
+  color: var(--text);
+  background: var(--surface);
+}
+.menu-popover {
+  top: calc(100% + 5px);
+  min-width: 218px;
+  padding: 6px;
+  border-radius: 10px;
+  box-shadow:
+    0 12px 36px #0005,
+    0 2px 6px #0003;
+}
+.menu-popover button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.menu-popover button:hover:not(:disabled),
+.menu-popover button:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  outline-offset: -2px;
+}
+.menu-popover kbd {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: var(--muted);
+}
+.version {
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+.workspace .topbar {
+  top: 36px;
+  height: auto;
+  min-height: 76px;
+  padding: 15px 26px;
+  gap: 16px;
+  background: var(--bg);
+  backdrop-filter: none;
+}
+.topbar > div:first-child {
+  min-width: 0;
+}
+.topbar h1 {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  letter-spacing: -0.025em;
+}
+.topbar small {
+  font-size: 9px;
+}
+.actions {
+  flex-shrink: 0;
+}
+.actions button {
+  min-height: 36px;
+  font-size: 12px;
+}
+.actions button.primary {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+}
+.status {
+  min-height: 38px;
+  flex-wrap: wrap;
+  padding: 10px 26px;
+  font-size: 10px;
+}
+.status > span {
+  box-shadow: none;
+}
+.status > span.ok {
+  box-shadow: none;
+}
+.error-banner,
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.error-banner {
+  color: var(--red);
+  background: color-mix(in srgb, var(--red) 9%, var(--bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--red) 25%, var(--border));
+}
+.notice {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  border-bottom: 1px solid var(--border);
+}
+.notice button,
+.error-banner button {
+  display: grid;
+  place-items: center;
+  color: inherit;
+  padding: 5px;
+  border: 0;
+  background: transparent;
+}
+.report {
+  margin: 22px auto 48px;
+  width: calc(100% - 44px);
+  border-radius: 14px;
+  box-shadow: 0 6px 22px #0001;
+}
+.report-title {
+  padding: 27px 28px 22px;
+  gap: 20px;
+}
+.report-title h2 {
+  font:
+    600 clamp(20px, 2vw, 27px)/1.3 Inter,
+    "SF Pro Display",
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.035em;
+}
+.report-title small {
+  font-size: 9px;
+}
+.equation {
+  font-size: 18px;
+  color: var(--accent);
+}
+.metrics > div {
+  padding: 16px 20px;
+}
+.metrics b,
+.verification-grid b,
+.analysis-strip b {
+  font-family: ui-monospace, "SF Mono", monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+.metrics small {
+  font-size: 9px;
+}
+.tabs {
+  padding: 16px 24px 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tabs button {
+  padding: 9px 11px;
+  border-radius: 7px;
+}
+.tabs button:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+.tabs button.active {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+.figure {
+  margin: 18px 24px 24px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.figure-head {
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 18px 20px 8px;
+}
+.figure h3 {
+  font:
+    550 15px/1.4 Inter,
+    system-ui,
+    sans-serif;
+}
+.figure-head small {
+  font-size: 9px;
+}
+.graph-controls {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.graph-controls label {
+  cursor: pointer;
+  min-height: 28px;
+}
+.caption {
+  line-height: 1.6;
+  font-family: inherit;
+  padding: 14px 20px;
+}
+.plot {
+  height: clamp(310px, 46vh, 480px);
+  padding: 0 4px;
+}
+.empty {
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 30px;
+}
+.empty > svg {
+  width: 32px;
+  height: 32px;
+  color: var(--accent);
+}
+.empty h4,
+.empty p {
+  margin: 0;
+}
+.empty h4 {
+  font-size: 16px;
+  color: var(--text);
+}
+.empty p {
+  max-width: 310px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.empty button {
+  padding: 10px 14px;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 7px;
+}
+.verification-grid,
+.analysis-strip,
+.derivation,
+.data-browser {
+  margin-left: 24px;
+  margin-right: 24px;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.verification-grid small {
+  font-size: 9px;
+  line-height: 1.5;
+}
+.derivation summary,
+.data-browser summary {
+  padding: 15px;
+}
+.data-browser > div {
+  content-visibility: auto;
+}
+.about-shark .shark-logo {
+  width: 70px;
+  height: 70px;
+}
+.about-shark {
+  padding: 10px;
+}
+.about-shark h3 {
+  font-family: inherit;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+.guide {
+  width: calc(100% - 44px);
+  border-radius: 14px;
+  overflow: hidden;
+}
+@media (max-width: 1150px) {
+  main {
+    grid-template-columns: 60px 274px minmax(0, 1fr);
+  }
+  .actions button {
+    font-size: 12px;
+    padding: 8px;
+  }
+  .actions button svg {
+    display: none;
+  }
+  .report {
+    width: calc(100% - 28px);
+    margin: 14px;
+  }
+  .report-title {
+    padding: 22px;
+  }
+  .metrics > div {
+    padding: 14px 12px;
+  }
+  .metrics b {
+    font-size: 12px;
+  }
+  .figure,
+  .verification-grid,
+  .analysis-strip,
+  .derivation,
+  .data-browser {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  .tabs {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .analysis-strip {
+    grid-template-columns: 1fr;
+  }
+  .analysis-strip > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+@media print {
+  main[data-theme] {
+    --bg: #fff;
+    --panel: #fff;
+    --side: #fff;
+    --surface: #f2f4f5;
+    --text: #18252b;
+    --muted: #52606a;
+    --border: #d4dade;
+    --blue: #1265aa;
+    --green: #24824f;
+    --mauve: #8047ab;
+    --accent: #007c83;
+    --grid: #e3e7eb;
+    display: block;
+  }
+  .menubar,
+  .notice,
+  .error-banner,
+  .graph-controls,
+  .guide {
+    display: none !important;
+  }
+  .report {
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    border: 0;
+  }
+  .figure {
+    break-inside: avoid;
+  }
+  .plot {
+    height: 380px;
+  }
+  .verification-grid,
+  .analysis-strip {
+    break-inside: avoid;
+  }
+}
