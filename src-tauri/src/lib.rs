@@ -1,6 +1,43 @@
+use requin_core::workspace::WorkspaceProject;
 use requin_core::{
     DeviceProject, LegacyImport, SimulationResult, SolveQuality, import_legacy, solve, template,
 };
+#[tauri::command]
+fn parse_workspace(source: String) -> Result<WorkspaceProject, String> {
+    WorkspaceProject::parse(&source)
+}
+#[tauri::command]
+fn serialize_workspace(workspace: WorkspaceProject) -> Result<String, String> {
+    workspace.serialize()
+}
+#[tauri::command]
+fn set_logo(window: tauri::WebviewWindow, variant: String) -> Result<(), String> {
+    let bytes: &[u8] = match variant.as_str() {
+        "delta" => include_bytes!("../../src/assets/logos/delta.png"),
+        "wedge" => include_bytes!("../../src/assets/logos/wedge.png"),
+        "chibi" => include_bytes!("../../src/assets/logos/chibi.png"),
+        _ => return Err("Unknown logo".into()),
+    };
+    let image = tauri::image::Image::from_bytes(bytes).map_err(|e| e.to_string())?;
+    #[cfg(target_os = "macos")]
+    window
+        .run_on_main_thread(move || {
+            use objc2::{AllocAnyThread, MainThreadMarker};
+            use objc2_app_kit::{NSApplication, NSImage};
+            use objc2_foundation::NSData;
+            if let Some(mtm) = MainThreadMarker::new() {
+                let data = NSData::with_bytes(bytes);
+                if let Some(icon) = NSImage::initWithData(NSImage::alloc(), &data) {
+                    // The application and image are alive, and this closure runs on AppKit's main thread.
+                    unsafe {
+                        NSApplication::sharedApplication(mtm).setApplicationIconImage(Some(&icon));
+                    }
+                }
+            }
+        })
+        .map_err(|e| e.to_string())?;
+    window.set_icon(image).map_err(|e| e.to_string())
+}
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -11,7 +48,9 @@ struct Validation {
 
 #[tauri::command]
 fn default_project() -> DeviceProject {
-    DeviceProject::default()
+    let mut project = template("pn").expect("built-in PN template");
+    project.carrier_statistics = requin_core::CarrierStatistics::FermiDirac;
+    project
 }
 
 #[tauri::command]
@@ -94,6 +133,9 @@ pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             default_project,
+            parse_workspace,
+            serialize_workspace,
+            set_logo,
             project_template,
             parse_project_toml,
             serialize_project,

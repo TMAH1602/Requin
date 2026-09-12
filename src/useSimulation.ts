@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Project, Result } from "./types";
+import { queuedSolve } from "./solveQueue";
 
 export function useSimulation(
   project: Project,
@@ -46,10 +47,7 @@ export function useSimulation(
                 ? "Solving preview…"
                 : "Solving full model…",
             );
-            const result = await invoke<Result>("run_simulation", {
-              project: input,
-              quality,
-            });
+            const result = await queuedSolve(input, quality, () => cancelled);
             if (cancelled) return;
             setOutput({ result, project: input, key, revision });
             setStatus(
@@ -85,6 +83,7 @@ export function useSimulation(
       !!output &&
       !stale &&
       !error &&
+      output.result.convergence.converged &&
       output.result.convergence.quality === "full",
   };
 }

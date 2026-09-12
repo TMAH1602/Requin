@@ -66,6 +66,7 @@ export function MenuBar({
       {menus.map((menu, index) => (
         <div className="menu" key={menu.label}>
           <button
+            data-tour-id={menu.label==='Export'?'export-menu':undefined}
             className="menu-trigger"
             ref={(el) => {
               triggers.current[index] = el;

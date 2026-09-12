@@ -20,15 +20,37 @@ full results arrive. Chart data uses the solved device's geometry.
 
 Charts load separately, avoid animated redraws, retain profile endpoints and
 material/charge discontinuities when downsampling, and memoize data preparation.
-The data table mounts only when expanded. Native MathML avoids shipping unused
-KaTeX font assets. The sidebar loads a small derived 128 px Wedge logo PNG.
+The profile and measurement tables and fit residual chart mount only when expanded.
+Native MathML avoids shipping unused KaTeX font assets; equation rendering is
+lazy-loaded separately. The navigation uses 256 px Delta/Wedge/Chibi derivatives.
+The initial application JS chunk is approximately 288 kB before compression;
+equation and chart libraries load separately.
+
+The workspace now follows Home → Projects/Device → Experiment → Studies/Data →
+Results, with Quantum, Learn, and Settings available throughout. Expert numerical
+controls are disclosed under Experiment. At minimum width, the inspector becomes
+a dismissible drawer. Theme-aware portaled selects support outside dismissal,
+Escape, Tab, arrow keys, Home/End, and typeahead.
+
+First open offers a hands-on tutorial, quick start, or skip. Settings replays the
+whole tutorial or one of twelve chapters. The tutorial works in an isolated
+practice workspace; exit restores the device, measurements, studies, completed
+study results, fit settings, selected page, and appearance. Practice exports do
+not write files. Every navigation section is represented in the chapter registry.
+
+Completed study arrays survive navigation within a session. Saved workspaces
+persist the study inputs, not computed arrays; reopen and run a saved study to
+regenerate output. Imported measurements and fit settings are embedded directly.
 
 ## Verification
 
 Run `npm run test:ui` after `npx playwright install chromium`. Tests exercise the
 real React UI with mocked Tauri IPC: menus, numeric drafts, save/export calls,
 failure feedback, imports, templates, layer selection, stale results, serialized
-solves, and the minimum window size. `cargo test --workspace --locked` covers
+solves, all themes/logo choices, measured import, workspace saves, complete
+tutorial traversal/restoration, study navigation, and the minimum window size.
+Pure analysis tests cover synthetic I–V/C–V recovery and optionally the private
+Field measurement when present. `cargo test --workspace --locked` covers
 the actual numerical core, including the MKC A1.4 regression.
 
 `npm run tauri -- build --bundles app` verifies the macOS application bundle.

@@ -40,6 +40,7 @@ async function start(page: Page, delay = 25) {
         },
         analytic_verification: false,
       };
+      localStorage.setItem("requin.tour.seen", "1");
       const w = window as any;
       w.calls = [];
       w.activeSolves = 0;
@@ -50,6 +51,16 @@ async function start(page: Page, delay = 25) {
       w.__TAURI_INTERNALS__ = {
         invoke: async (command: string, args: any = {}) => {
           w.calls.push({ command, args: structuredClone(args) });
+          if (command === "set_logo") return;
+          if (command === "parse_workspace")
+            return {
+              schema_version: 2,
+              device: structuredClone(project),
+              datasets: [],
+              studies: [],
+              analysis: {},
+            };
+          if (command === "serialize_workspace") return "schema_version = 2";
           if (command === "default_project") return structuredClone(project);
           if (command === "project_template") {
             if (args.kind === "hemt") throw "Template unavailable";
@@ -134,6 +145,11 @@ async function start(page: Page, delay = 25) {
     { delay },
   );
   await page.goto("/");
+  await page.getByRole("button", { name: "Device", exact: true }).click();
+}
+async function choose(page: Page, label: string, option: string) {
+  await page.getByRole("combobox", { name: label, exact: true }).click();
+  await page.getByRole("option", { name: option, exact: true }).click();
 }
 const menu = (page: Page, label: string) =>
   page
@@ -214,7 +230,7 @@ test("numeric drafts permit exponents, restore invalid values, and metadata does
       (window as any).calls.filter((c: any) => c.command === "run_simulation")
         .length,
   );
-  await page.getByRole("button", { name: "Project", exact: true }).click();
+  await page.getByRole("button", { name: "Projects", exact: true }).click();
   await page.getByLabel("Project name", { exact: true }).fill("Renamed diode");
   await page.waitForTimeout(650);
   expect(
@@ -273,7 +289,7 @@ test("empty figures lead to settings, new layers select themselves, and imports 
   await expect(page.getByText("No quantum states to display")).toBeVisible();
   await page.getByRole("button", { name: "Open quantum settings" }).click();
   await expect(page.getByText("Enable Schrödinger solve")).toBeVisible();
-  await page.getByRole("button", { name: "Structure", exact: true }).click();
+  await page.getByRole("button", { name: "Device", exact: true }).click();
   await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.locator(".editor-head")).toContainText("Layer 3");
   await page.getByRole("button", { name: "Delete selected layer" }).click();
@@ -284,14 +300,14 @@ test("empty figures lead to settings, new layers select themselves, and imports 
     buffer: Buffer.from('name = "PN diode"'),
   };
   await page.locator('input[type="file"]').setInputFiles(file);
-  await expect(page.locator(".notice")).toContainText("Project imported");
+  await expect(page.locator(".notice")).toContainText("Workspace opened");
   await page.locator('input[type="file"]').setInputFiles(file);
   await expect
     .poll(() =>
       page.evaluate(
         () =>
           (window as any).calls.filter(
-            (c: any) => c.command === "parse_project_toml",
+            (c: any) => c.command === "parse_workspace",
           ).length,
       ),
     )
@@ -304,12 +320,12 @@ test("templates can be selected again and failures are visible", async ({
   await start(page);
   await settled(page);
   for (let i = 0; i < 2; i++) {
-    await page.getByRole("button", { name: "Project", exact: true }).click();
-    await page.getByLabel("Device template").selectOption("pn");
+    await page.getByRole("button", { name: "Projects", exact: true }).click();
+    await choose(page, "Device template", "PN diode");
     await expect(page.locator(".notice")).toContainText("Template loaded");
   }
-  await page.getByRole("button", { name: "Project", exact: true }).click();
-  await page.getByLabel("Device template").selectOption("hemt");
+  await page.getByRole("button", { name: "Projects", exact: true }).click();
+  await choose(page, "Device template", "GaAs / AlGaAs HEMT");
   await expect(page.getByRole("alert")).toContainText("Template unavailable");
 });
 
@@ -317,6 +333,7 @@ test("solves are serialized, old results are marked, and stale exports are block
   page,
 }) => {
   await start(page, 700);
+  await page.getByRole("button", { name: "Experiment", exact: true }).click();
   await settled(page);
   await page.getByLabel("Surface potential / bias", { exact: true }).fill("1");
   await page
@@ -351,7 +368,7 @@ test("layout fits the minimum desktop width and light theme", async ({
   await page.screenshot({ path: "test-results/requin-dark.png" });
   await page.setViewportSize({ width: 1040, height: 700 });
   await page.getByRole("button", { name: "Settings", exact: true }).click();
-  await page.getByLabel("Color theme").selectOption("latte");
+  await choose(page, "Color theme", "Catppuccin Latte");
   expect(
     await page
       .locator(".workspace")
@@ -371,7 +388,19 @@ test("print uses a white report for every theme and cancelled saves give feedbac
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   for (const theme of ["mocha", "latte", "macchiato", "tokyo", "gruvbox"]) {
     await page.emulateMedia({ media: "screen" });
-    await page.getByLabel("Color theme").selectOption(theme);
+    await choose(
+      page,
+      "Color theme",
+      (
+        {
+          mocha: "Catppuccin Mocha",
+          latte: "Catppuccin Latte",
+          macchiato: "Catppuccin Macchiato",
+          tokyo: "Tokyo Night",
+          gruvbox: "Gruvbox",
+        } as Record<string, string>
+      )[theme],
+    );
     await page.emulateMedia({ media: "print" });
     await expect(page.locator(".menubar")).toBeHidden();
     await expect(page.locator(".report")).toBeVisible();

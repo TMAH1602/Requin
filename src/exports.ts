@@ -5,6 +5,7 @@ export async function saveText(
   content: string,
   type = "text/plain",
 ) {
+  if(document.body.dataset.tutorial==='active')return 'Practice export (not written to disk)';
   name =
     name.replace(/[<>:"/\\|?*\u0000-\u001f]/g, "_").trim() ||
     "Requin-export.txt";

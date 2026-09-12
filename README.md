@@ -47,7 +47,7 @@ The goal is not to hide the physics. It is to remove the interface friction betw
 
 - Interface-aware, finite-volume nonlinear Poisson solver.
 - Fixed-potential and true zero-field boundary conditions with exact dielectric-interface placement.
-- Boltzmann carrier populations and complete-ionization doping model.
+- Selectable Boltzmann/Fermi–Dirac carrier populations and complete-ionization doping model.
 - Ohmic, Schottky, and zero-field boundaries.
 - Position-dependent effective-mass electron Schrödinger eigenstates.
 - Voltage sweeps and quasi-static terminal-charge C–V.
@@ -56,6 +56,12 @@ The goal is not to hide the physics. It is to remove the interface friction betw
 
 ### Scientific workspace
 
+- Labeled workflow navigation, first-open hands-on tutorial, and full or chapter replay in Settings.
+- Saved bias/doping/C–V studies with comparison curves, cancellation, and reproducible device snapshots.
+- Measurement import with column/unit confirmation; linear/log I–V, C–V and inverse-capacitance plots; adjustable fits and residuals.
+- Schottky depletion/Debye references, conditional barrier/area extraction, and C–V doping extraction. See [lab verification](docs/SCHOTTKY_VERIFICATION.md) for assumptions and tests.
+- Version 2 workspaces embed measurements, study definitions, and analysis settings while retaining version 1 import.
+- Delta, Wedge, and anime Chibi appearance choices; Delta is the packaged default.
 - Band, carrier-density, electric-field, wavefunction, and I–V/C–V figures.
 - Potential and physical charge-density figures, analytic overlays, voltage-drop cards, and homework-ready reports.
 - Adaptive nm/µm, V/cm/kV/cm/MV/cm, mA/cm², and µF/cm² presentation.
@@ -104,8 +110,22 @@ brew install --cask tmah1602/requin/requin
 ```
 
 Requin ships unsigned Apple Silicon and Intel builds. If macOS blocks a launch,
-open **System Settings → Privacy & Security** and choose **Open Anyway** for
-Requin. You may need to approve a new version after upgrading.
+first try to open Requin once, then promptly open **System Settings → Privacy &
+Security** and choose **Open Anyway** for Requin. Apple exposes that exception
+for about one hour after the blocked launch. You may need to approve a new version
+after upgrading.
+
+If **Open Anyway** still does not appear, verify that you installed the official
+tap, then remove quarantine from this app only and launch it:
+
+```bash
+brew info --cask tmah1602/requin/requin
+xattr -dr com.apple.quarantine /Applications/Requin.app
+open /Applications/Requin.app
+```
+
+Do not disable Gatekeeper globally. On a school-managed Mac, device policy may
+block both methods; in that case the administrator must approve Requin.
 
 To update an existing installation:
 

@@ -16,6 +16,8 @@ pub struct DeviceProject {
     pub sweep: Sweep,
     pub solver: SolverSettings,
     pub analytic_verification: bool,
+    pub carrier_statistics: CarrierStatistics,
+    pub majority_carriers_only: bool,
 }
 
 impl Default for DeviceProject {
@@ -38,6 +40,8 @@ impl Default for DeviceProject {
             sweep: Sweep::default(),
             solver: SolverSettings::default(),
             analytic_verification: false,
+            carrier_statistics: CarrierStatistics::Boltzmann,
+            majority_carriers_only: false,
         }
     }
 }
@@ -80,6 +84,14 @@ pub enum ChargeMode {
     #[default]
     MobileCarriers,
     FixedVolume,
+}
+
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum CarrierStatistics {
+    #[default]
+    Boltzmann,
+    FermiDirac,
 }
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -178,6 +190,7 @@ pub struct SweepPoint {
     pub charge_c_m2: f64,
     pub capacitance_f_m2: Option<f64>,
     pub current_a_m2: Option<f64>,
+    pub converged: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -236,10 +249,27 @@ impl DeviceProject {
         if !(0.1..=2000.0).contains(&self.temperature_k) {
             errors.push("temperature must be between 0.1 K and 2000 K".into());
         }
-        if self.mesh_spacing_nm <= 0.0 {
+        if !self.mesh_spacing_nm.is_finite() || self.mesh_spacing_nm <= 0.0 {
             errors.push("mesh spacing must be positive".into());
         }
         for (i, layer) in self.layers.iter().enumerate() {
+            if !layer.thickness_nm.is_finite()
+                || !layer.donors_cm3.is_finite()
+                || !layer.acceptors_cm3.is_finite()
+                || layer.donors_cm3 < 0.0
+                || layer.acceptors_cm3 < 0.0
+            {
+                errors.push(format!(
+                    "layer {} needs finite thickness and nonnegative doping",
+                    i + 1
+                ));
+            }
+            if layer
+                .mesh_spacing_nm
+                .is_some_and(|v| !v.is_finite() || v <= 0.0)
+            {
+                errors.push(format!("layer {} mesh must be positive", i + 1));
+            }
             if layer.thickness_nm <= 0.0 {
                 errors.push(format!("layer {} thickness must be positive", i + 1));
             }
@@ -276,6 +306,34 @@ impl DeviceProject {
                 errors.push(
                     "analytic verification requires fixed-volume charge in every layer".into(),
                 );
+            }
+        }
+        for contact in [&self.surface, &self.substrate] {
+            if !contact.voltage_v.is_finite() || !contact.barrier_ev.is_finite() {
+                errors.push("contact voltage and barrier must be finite".into());
+            }
+        }
+        if self.solver.max_iterations == 0
+            || self.solver.max_iterations > 10000
+            || !self.solver.tolerance.is_finite()
+            || self.solver.tolerance <= 0.0
+            || !self.solver.mixing.is_finite()
+            || !(0.01..=1.0).contains(&self.solver.mixing)
+            || !self.solver.preview_scale.is_finite()
+            || self.solver.preview_scale < 1.0
+        {
+            errors.push("solver settings need 1–10000 iterations, positive tolerance, mixing 0.01–1, and preview scale ≥ 1".into());
+        }
+        if self.sweep.enabled {
+            let s = &self.sweep;
+            if !s.start_v.is_finite()
+                || !s.stop_v.is_finite()
+                || !s.step_v.is_finite()
+                || s.step_v == 0.0
+                || (s.stop_v - s.start_v) * s.step_v <= 0.0
+                || ((s.stop_v - s.start_v) / s.step_v).abs() > 500.0 + 1e-9
+            {
+                errors.push("sweep must have an increasing or decreasing range, a matching nonzero step, and at most 501 points".into());
             }
         }
         if let Some(q) = &self.quantum {

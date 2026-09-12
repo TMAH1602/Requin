@@ -1,6 +1,6 @@
 # Requin model guide
 
-This document describes what Requin 0.1 computes and, equally importantly, what it does not yet compute.
+This document describes the current development build and its model boundaries.
 
 ## Coordinates and mesh
 
@@ -8,7 +8,9 @@ Projects use convenient semiconductor units such as nm, eV, cm⁻³, and V. Each
 
 ## Electrostatics
 
-Requin discretizes one-dimensional Poisson electrostatics using a conservative finite-volume formulation and harmonic interface permittivity. Its nonlinear loop updates Boltzmann electron and hole populations from local band edges and applies damped potential updates.
+Requin discretizes one-dimensional Poisson electrostatics using a conservative finite-volume formulation and harmonic interface permittivity. A damped Newton update includes the carrier-charge Jacobian. Carrier populations use selectable Boltzmann or normalized Fermi–Dirac F₁/₂ statistics. The latter uses a cached integral table with dilute and degenerate asymptotes. New templates select Fermi–Dirac; older files retain Boltzmann unless explicitly changed.
+
+The Schottky preset explicitly enables a majority-carrier-only approximation. It suppresses equilibrium minority-carrier inversion when examining a depleted n-type Schottky contact; it is not a general transport or frequency-dependent model. Turn it off in Experiment to include both equilibrium carrier populations. The analytic depletion and Debye cards remain labeled nondegenerate references, especially important at 10¹⁹ cm⁻³.
 
 Supported endpoint conditions are:
 
@@ -41,10 +43,12 @@ Current limitations include electron-only states, no multiband coupling or non-p
 
 ## Voltage sweeps, C–V, and I–V
 
-Each voltage point receives an electrostatic solve. Terminal charge is integrated over the device, and quasi-static capacitance is estimated by centered or endpoint finite differences.
+Each full-quality voltage point receives an electrostatic solve. Metal terminal charge is obtained from the surface displacement flux, and quasi-static capacitance is estimated by centered or endpoint finite differences. Failed neighboring solves invalidate the associated capacitance. Preview solves omit sweeps. Surface voltage is swept relative to the fixed substrate potential.
 
 PN current is an ideal diffusion estimate derived from equilibrium material and doping parameters. Schottky current uses thermionic emission. These are useful for qualitative exploration but are not solutions of the electron and hole continuity equations.
 
 ## Convergence
 
 A result records quality, iteration count, maximum potential update, convergence status, and warnings. A preview can be visually useful, but it is not a substitute for a converged full-quality result. Mesh-refinement and parameter-sensitivity checks remain the user's responsibility.
+
+See [Schottky lab verification](SCHOTTKY_VERIFICATION.md) for automated mesh, C–V, and measurement-fit checks. A measured I–V fit identifies ideality factor and saturation current, not junction area and barrier independently; one must be supplied to infer the other.

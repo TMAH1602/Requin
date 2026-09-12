@@ -68,6 +68,11 @@ fn build_grid(project: &DeviceProject, quality: SolveQuality) -> Result<Grid, So
             .ok_or_else(|| SolveError::Invalid(format!("unknown material {}", layer.material)))?;
         let requested = layer.mesh_spacing_nm.unwrap_or(project.mesh_spacing_nm) * scale;
         let cells = (layer.thickness_nm / requested).ceil().max(1.0) as usize;
+        if cells > 11999 || x_nm.len().saturating_add(cells) > 12000 {
+            return Err(SolveError::Invalid(
+                "mesh exceeds 12,000 nodes; increase mesh spacing".into(),
+            ));
+        }
         let dx = layer.thickness_nm / cells as f64;
         if x_nm.is_empty() {
             let x = offset;
@@ -142,29 +147,57 @@ fn build_grid(project: &DeviceProject, quality: SolveQuality) -> Result<Grid, So
     })
 }
 
-fn neutral_phi(grid: &Grid, index: usize, temperature_k: f64) -> f64 {
+fn neutral_phi(
+    grid: &Grid,
+    index: usize,
+    temperature_k: f64,
+    statistics: CarrierStatistics,
+) -> f64 {
     let vt = KB_EV * temperature_k;
     let net = grid.nd[index] - grid.na[index];
+    let eta = |ratio: f64| {
+        if statistics == CarrierStatistics::FermiDirac {
+            crate::statistics::inverse_half(ratio)
+        } else {
+            ratio.max(1e-40).ln()
+        }
+    };
     let ec_minus_ef = if net > 1.0 {
-        vt * (grid.nc[index] / net).max(1e-40).ln()
+        -vt * eta(net / grid.nc[index])
     } else if net < -1.0 {
-        grid.eg[index] - vt * (grid.nv[index] / -net).max(1e-40).ln()
+        grid.eg[index] + vt * eta(-net / grid.nv[index])
     } else {
         0.5 * grid.eg[index] + 0.5 * vt * (grid.nc[index] / grid.nv[index].max(1.0)).ln()
     };
     grid.ec0[index] - ec_minus_ef
 }
 
-fn boundary_phi(contact: &Contact, grid: &Grid, index: usize, temperature_k: f64) -> f64 {
+fn boundary_phi(
+    contact: &Contact,
+    grid: &Grid,
+    index: usize,
+    temperature_k: f64,
+    statistics: CarrierStatistics,
+) -> f64 {
     match contact.kind {
         ContactKind::Schottky => grid.ec0[index] - contact.barrier_ev + contact.voltage_v,
-        ContactKind::Ohmic => neutral_phi(grid, index, temperature_k) + contact.voltage_v,
-        ContactKind::ZeroField => neutral_phi(grid, index, temperature_k) + contact.voltage_v,
+        ContactKind::Ohmic => {
+            neutral_phi(grid, index, temperature_k, statistics) + contact.voltage_v
+        }
+        ContactKind::ZeroField => {
+            neutral_phi(grid, index, temperature_k, statistics) + contact.voltage_v
+        }
         ContactKind::FixedPotential => contact.voltage_v,
     }
 }
 
-fn carriers(grid: &Grid, phi: &[f64], t: f64) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
+fn carriers(
+    grid: &Grid,
+    phi: &[f64],
+    t: f64,
+    statistics: CarrierStatistics,
+    majority_only: bool,
+) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     let vt = KB_EV * t;
     let mut n = Vec::with_capacity(phi.len());
     let mut p = Vec::with_capacity(phi.len());
@@ -178,8 +211,23 @@ fn carriers(grid: &Grid, phi: &[f64], t: f64) -> (Vec<f64>, Vec<f64>, Vec<f64>) 
         }
         let ec = grid.ec0[i] - phi[i];
         let ev = ec - grid.eg[i];
-        let ni = grid.nc[i] * (-ec / vt).clamp(-100.0, 80.0).exp();
-        let pi = grid.nv[i] * (ev / vt).clamp(-100.0, 80.0).exp();
+        let population = |eta: f64| {
+            if statistics == CarrierStatistics::FermiDirac {
+                crate::statistics::fermi_half(eta)
+            } else {
+                eta.clamp(-100.0, 80.0).exp()
+            }
+        };
+        let ni = if majority_only && grid.na[i] > grid.nd[i] {
+            0.0
+        } else {
+            grid.nc[i] * population(-ec / vt)
+        };
+        let pi = if majority_only && grid.nd[i] >= grid.na[i] {
+            0.0
+        } else {
+            grid.nv[i] * population(ev / vt)
+        };
         n.push(ni);
         p.push(pi);
         rho.push(grid.nd[i] - grid.na[i] + pi - ni);
@@ -223,8 +271,20 @@ fn poisson(
         && project.substrate.kind == ContactKind::ZeroField;
     let left_neumann = project.surface.kind == ContactKind::ZeroField && !both_neumann;
     let right_neumann = project.substrate.kind == ContactKind::ZeroField;
-    let left = boundary_phi(&project.surface, grid, 0, project.temperature_k);
-    let right = boundary_phi(&project.substrate, grid, count - 1, project.temperature_k);
+    let left = boundary_phi(
+        &project.surface,
+        grid,
+        0,
+        project.temperature_k,
+        project.carrier_statistics,
+    );
+    let right = boundary_phi(
+        &project.substrate,
+        grid,
+        count - 1,
+        project.temperature_k,
+        project.carrier_statistics,
+    );
     let length = grid.x_nm[count - 1].max(1e-12);
     let mut phi: Vec<f64> = grid
         .x_nm
@@ -255,7 +315,13 @@ fn poisson(
     let mut residual = f64::INFINITY;
     let mut iterations = 0;
     for iter in 0..max_iter {
-        let (_, _, rho_cm3) = carriers(grid, &phi, project.temperature_k);
+        let (electrons, holes, rho_cm3) = carriers(
+            grid,
+            &phi,
+            project.temperature_k,
+            project.carrier_statistics,
+            project.majority_carriers_only,
+        );
         let inner = count - 2;
         let mut lo = vec![0.0; inner.saturating_sub(1)];
         let mut di = vec![0.0; inner];
@@ -308,6 +374,31 @@ fn poisson(
             };
             rhs[row] += Q * 1e6 * 0.5 * (rho_l * dx_l + rho_r * dx_r);
             rhs[row] += Q * grid.sheet_charge_cm2[i] * 1e4;
+            // Newton linearization of charge: stabilizes neutral, highly doped tails.
+            if grid.charge_mode[i] == ChargeMode::MobileCarriers {
+                let vt = KB_EV * project.temperature_k;
+                let derivative = if project.carrier_statistics == CarrierStatistics::FermiDirac {
+                    let ec = grid.ec0[i] - phi[i];
+                    let f = crate::statistics::fermi_half;
+                    ((if project.majority_carriers_only && grid.na[i] > grid.nd[i] {
+                        0.0
+                    } else {
+                        grid.nc[i]
+                    }) * (f(-ec / vt + 0.001) - f(-ec / vt - 0.001))
+                        + (if project.majority_carriers_only && grid.nd[i] >= grid.na[i] {
+                            0.0
+                        } else {
+                            grid.nv[i]
+                        }) * (f((ec - grid.eg[i]) / vt + 0.001)
+                            - f((ec - grid.eg[i]) / vt - 0.001)))
+                        / (0.002 * vt)
+                } else {
+                    (electrons[i] + holes[i]) / vt
+                };
+                let jacobian = Q * 1e6 * derivative * 0.5 * (dx_l + dx_r);
+                di[row] += jacobian;
+                rhs[row] += jacobian * phi[i];
+            }
         }
         let solved = thomas(&lo, &di, &up, &rhs)?;
         residual = 0.0_f64;
@@ -347,7 +438,13 @@ fn poisson(
             break;
         }
     }
-    let (n, p, rho) = carriers(grid, &phi, project.temperature_k);
+    let (n, p, rho) = carriers(
+        grid,
+        &phi,
+        project.temperature_k,
+        project.carrier_statistics,
+        project.majority_carriers_only,
+    );
     Ok((phi, n, p, rho, iterations, residual, residual < tolerance))
 }
 
@@ -496,18 +593,8 @@ fn quantum_states(project: &DeviceProject, grid: &Grid, ec: &[f64]) -> Vec<Eigen
         .collect()
 }
 
-fn terminal_charge(grid: &Grid, rho_cm3: &[f64]) -> f64 {
-    grid.x_nm
-        .windows(2)
-        .enumerate()
-        .map(|(i, pair)| {
-            let dx = (pair[1] - pair[0]) * 1e-9;
-            Q * 1e6 * 0.5 * (rho_cm3[i] + rho_cm3[i + 1]) * dx
-        })
-        .sum()
-}
-
 fn current_density(project: &DeviceProject, voltage: f64) -> Option<f64> {
+    let voltage = voltage - project.substrate.voltage_v;
     let t = project.temperature_k;
     let vt = KB_EV * t;
     if project.surface.kind == ContactKind::Schottky {
@@ -566,12 +653,17 @@ fn sweep(project: &DeviceProject, quality: SolveQuality) -> Result<Vec<SweepPoin
         p.sweep.enabled = false;
         p.surface.voltage_v = voltage;
         let grid = build_grid(&p, quality)?;
-        let (_, _, _, rho, _, _, _) = poisson(&p, &grid, quality)?;
+        let (phi, _, _, _, _, _, converged) = poisson(&p, &grid, quality)?;
+        // Surface electrode charge from outward displacement, not the sum of
+        // both terminals' space charge. Positive bias gives positive dQmetal/dV.
+        let charge =
+            -EPS0 * grid.face_eps[0] * (phi[1] - phi[0]) / ((grid.x_nm[1] - grid.x_nm[0]) * 1e-9);
         points.push(SweepPoint {
             voltage_v: voltage,
-            charge_c_m2: terminal_charge(&grid, &rho),
+            charge_c_m2: charge,
             capacitance_f_m2: None,
             current_a_m2: current_density(&p, voltage),
+            converged,
         });
     }
     if points.len() >= 2 {
@@ -584,8 +676,10 @@ fn sweep(project: &DeviceProject, quality: SolveQuality) -> Result<Vec<SweepPoin
             } else {
                 (i - 1, i + 1)
             };
-            points[i].capacitance_f_m2 =
-                Some((charges[b] - charges[a]) / (points[b].voltage_v - points[a].voltage_v));
+            if points[a].converged && points[b].converged && points[i].converged {
+                points[i].capacitance_f_m2 =
+                    Some((charges[b] - charges[a]) / (points[b].voltage_v - points[a].voltage_v));
+            }
         }
     }
     Ok(points)
@@ -639,6 +733,19 @@ pub fn solve(
             warnings.push("The mesh is coarse for analytic verification; use at least 20 cells across the thinnest layer".into());
         }
     }
+    // Preview is a quick single-bias profile; sweeps run only at full quality.
+    let sweep_result = if quality == SolveQuality::Full {
+        sweep(project, quality)?
+    } else {
+        vec![]
+    };
+    let converged = converged && sweep_result.iter().all(|p| p.converged);
+    if sweep_result.iter().any(|p| !p.converged) {
+        warnings.push("One or more sweep points did not converge; capacitance is unavailable around those points".into());
+    }
+    if project.majority_carriers_only {
+        warnings.push("Majority-carrier approximation: minority inversion is suppressed; this is not an equilibrium MOS or transport calculation".into());
+    }
     Ok(SimulationResult {
         position_nm: grid.x_nm,
         potential_v: phi,
@@ -651,7 +758,7 @@ pub fn solve(
         charge_density_c_cm3,
         material: grid.mat_name,
         eigenstates: states,
-        sweep: sweep(project, quality)?,
+        sweep: sweep_result,
         convergence: ConvergenceReport {
             converged,
             iterations,

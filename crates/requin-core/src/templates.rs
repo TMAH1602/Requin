@@ -17,6 +17,7 @@ fn layer(name: &str, material: &str, thickness_nm: f64, nd: f64, na: f64, x: Opt
 
 pub fn template(kind: &str) -> Option<DeviceProject> {
     let mut p = DeviceProject::default();
+    p.carrier_statistics = CarrierStatistics::FermiDirac;
     match kind {
         "pn" => {
             p.name = "Silicon PN diode".into();
@@ -35,14 +36,17 @@ pub fn template(kind: &str) -> Option<DeviceProject> {
         }
         "schottky" => {
             p.name = "Silicon Schottky diode".into();
-            p.layers = vec![layer("P-type silicon", "Si", 200., 0., 1e17, None)];
+            p.layers = vec![layer("N-type silicon", "Si", 1000., 1e17, 0., None)];
+            p.surface.barrier_ev = 0.6;
+            p.carrier_statistics = CarrierStatistics::FermiDirac;
+            p.majority_carriers_only = true;
             p.sweep = Sweep {
                 enabled: true,
-                start_v: -1.,
-                stop_v: 0.6,
-                step_v: 0.1,
+                start_v: -0.5,
+                stop_v: 0.,
+                step_v: 0.01,
             };
-            p.mesh_spacing_nm = 1.;
+            p.mesh_spacing_nm = 0.5;
         }
         "mos" => {
             p.name = "Silicon MOS capacitor".into();
